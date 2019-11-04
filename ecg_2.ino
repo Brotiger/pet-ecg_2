@@ -105,17 +105,19 @@ void setup() {
 void scan(){
   int faza = 0;
   boolean input_block = false;
+  boolean time_block = false; //блокирует постоянное присвоение faza значения 1
   boolean lastButtonL = false;//Переменная для проверки было ли препыдущим действие - джостик в лево
   while(true){
-    if(digitalRead(sw) == 0 && input_block == false){
+    if(digitalRead(sw) == 0 && !input_block){
         input_block = true;
         faza += 1;
     }
     if(digitalRead(sw) == 1){
         input_block = false;
     }
-    if(timer == arr_size){
+    if(timer == arr_size && !time_block){
       faza = 1;
+      time_block = true;
     }
     if(faza == 0){
       errors();
@@ -136,11 +138,11 @@ void scan(){
     }
     if(faza == 1){
       int URy_value = analogRead(URy);
-      if(URy_value > max_UR && timer - max_positionX > 0){//Джостик в лево 
+      if(URy_value > max_UR && timer - max_positionX / size_factor > 0){//Джостик в лево 
          clearScreen();
          lastButtonL = true;
          //if(timer % max_positionX != 0) timer -= timer % max_positionX; //Данный вариант тоже допустим
-         if(positionX1 < max_positionX) timer -= positionX1;
+         if(positionX1 < max_positionX) timer -= positionX1 / size_factor;
          positionX0 = max_positionX;
          while(positionX0 > 0){
              drawBackward();
@@ -149,7 +151,7 @@ void scan(){
       }
       if(URy_value < min_UR && count_arr > timer){//Джостик в право
          clearScreen();
-         if(lastButtonL)timer += max_positionX;//(Если предыдущее действие было джостик в лево тогда выполнять эту команду)
+         if(lastButtonL)timer += max_positionX / size_factor;//(Если предыдущее действие было джостик в лево тогда выполнять эту команду)
          
          lastButtonL = false;
         
@@ -173,17 +175,17 @@ void coordinateCalculation(){
 }
 void drawForward(){
      coordinateCalculation();
-     positionX1 = positionX0 + 1;//* size_factor
+     positionX1 = positionX0 + 1 * size_factor;//* size_factor
      tft.drawLine(positionX0,positionY0, positionX1,positionY1, GREEN);
     
-     positionX0 += 1;
+     positionX0 += 1 * size_factor;
 }
 void drawBackward(){
      coordinateCalculation();
-     positionX1 = positionX0 - 1;
+     positionX1 = positionX0 - 1 * size_factor;
      tft.drawLine(positionX0,positionY1, positionX1,positionY0, GREEN);
     
-     positionX0 -= 1;
+     positionX0 -= 1 * size_factor;
 }
 String stringScanTime(){
   return (String)((float)(sensor_delay * arr_size) / 1000) + " seconds";
@@ -250,7 +252,7 @@ void Calibration(){
  factor = sizeY / max_sensor;
  min_sensor_f = min_sensor*factor;
  max_sensor_f = max_sensor*factor;
- size_factor = sizeY / (max_sensor_f - min_sensor_f);
+ size_factor = floor(sizeY / (max_sensor_f - min_sensor_f));
 }
 void drawBorder () {
   int width = tft.width() - 1;
